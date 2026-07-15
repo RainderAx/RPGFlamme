@@ -10,7 +10,7 @@ public class Gobelin extends Entity{
         super(name, hp, attackPoints, defPoints); 
         try {
             
-            gobelinImg = new ImageIcon(getClass().getResource("/assets/gobelin.png")).getImage();
+            gobelinImg = new ImageIcon(getClass().getResource("/assets/Sprite_Monster.png")).getImage();
         } catch (Exception e) {
             System.err.println("Erreur de chargement de l'image gobelin : " + e.getMessage());
         }
