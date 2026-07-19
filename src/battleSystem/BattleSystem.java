@@ -106,10 +106,41 @@ public class BattleSystem {
 
         if ("ULTI".equals(pendingAction)) {
             launchUltimate(currentHero, chosenTarget);
-        } else {
+        } else if ("ATTACK".equals(pendingAction)) {
             currentHero.attack(chosenTarget);
             commandsLocked = false;
             finishHeroTurn();
+        } else {
+            // Actions spécifiques aux héros
+            executeHeroSpecificAction(currentHero, chosenTarget, pendingAction);
+            commandsLocked = false;
+            finishHeroTurn();
+        }
+    }
+
+    private void executeHeroSpecificAction(Entity hero, Entity target, String action) {
+        if (hero instanceof Flamme) {
+            Flamme f = (Flamme) hero;
+            switch (action) {
+                case "BRIQUET": f.briquet(target); break;
+                case "ENCENS": f.encensDuTigre(); break;
+                case "PREP_MENTALE": f.preparationMentale(); break;
+            }
+        } else if (hero instanceof Bob) {
+            Bob b = (Bob) hero;
+            switch (action) {
+                case "MARTEAU": b.coupDuMarteau(target); break;
+                case "PROVOC": b.activerProvocation(); break;
+                case "SUPER_PROVOC": b.superProvoc(); break;
+            }
+        } else if (hero instanceof Tching) {
+            Tching t = (Tching) hero;
+            switch (action) {
+                case "RAPIDE": t.coupRapide(target); break;
+                case "TIGRE": t.techniqueDuTigre(target); break;
+                case "ENTRAINEMENT": t.entrainementIntensif(); break;
+                case "ZONE": t.zoneAttack(monsters); break;
+            }
         }
     }
 

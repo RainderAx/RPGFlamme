@@ -125,7 +125,7 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         }
 
         pnlActions.addActionButton("Attaquer", ActionMenuPanel.Palette.BLUE,
-                () -> battleSystem.prepareAction("ATTACK"));
+                () -> showHeroMethods(currentHero));
 
         if (currentHero instanceof UltimateCapable) {
             UltimateCapable u = (UltimateCapable) currentHero;
@@ -137,6 +137,35 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             btnUlti.setAlignmentX(Component.CENTER_ALIGNMENT);
             btnUlti.addActionListener(e -> battleSystem.prepareAction("ULTI"));
             pnlActions.add(btnUlti);
+        }
+
+        pnlActions.revalidate();
+        pnlActions.repaint();
+    }
+
+    private void showHeroMethods(Entity hero) {
+        pnlActions.removeAll();
+        
+        // Option pour revenir en arrière
+        pnlActions.addActionButton("< Retour", Color.GRAY, this::updateActionButtons);
+        
+        // Attaque de base
+        pnlActions.addActionButton("Attaque de base", ActionMenuPanel.Palette.BLUE, 
+                () -> battleSystem.prepareAction("ATTACK"));
+
+        if (hero instanceof Flamme) {
+            pnlActions.addActionButton("Briquet", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("BRIQUET"));
+            pnlActions.addActionButton("Encens", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("ENCENS"));
+            pnlActions.addActionButton("Prep. Mentale", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("PREP_MENTALE"));
+        } else if (hero instanceof Bob) {
+            pnlActions.addActionButton("Marteau", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("MARTEAU"));
+            pnlActions.addActionButton("Provoc", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("PROVOC"));
+            pnlActions.addActionButton("Super Provoc", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("SUPER_PROVOC"));
+        } else if (hero instanceof Tching) {
+            pnlActions.addActionButton("Coup Rapide", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("RAPIDE"));
+            pnlActions.addActionButton("Technique Tigre", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("TIGRE"));
+            pnlActions.addActionButton("Entraînement", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("ENTRAINEMENT"));
+            pnlActions.addActionButton("Attaque Zone", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("ZONE"));
         }
 
         pnlActions.revalidate();

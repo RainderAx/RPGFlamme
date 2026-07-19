@@ -13,7 +13,7 @@ public class Flamme extends Entity implements UltimateCapable {
     protected int boostAtkTicks = 0;
     protected boolean isPreparing = false; // Pour la Préparation Mentale
 
-    private static final int ULTI_MAX = 5;
+    private static final int ULTI_MAX = 3;
     private int ultiTicks = ULTI_MAX;
     private boolean isUltimateReady = false;
 
@@ -101,15 +101,8 @@ public class Flamme extends Entity implements UltimateCapable {
     }
 
     public void checkUlti(Entity target) {
-        if (this.isAlive() && target.getArrow()) {
-            if (target.getHp() < 15) {
-                System.out.println("OVERKILL !");
-                target.takeDamage(target.getHp() + target.getDefPoints());
-            } else {
-                System.out.println("La flèche brûle " + getName());
-                target.setBurn(target.getBurnTicks() + 1);
-            }
-            target.setArrow(false);
+        if (ultimate instanceof UltimateFlamme) {
+            ((UltimateFlamme) ultimate).checkUlti(this, target);
         }
     }
 
