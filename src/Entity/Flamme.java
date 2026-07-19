@@ -1,14 +1,23 @@
 package Entity;
 
+import java.util.List;
 import java.util.Scanner;
 
-public class Flamme extends Entity {
+import battleSystem.animation.BackgroundAnimation;
+import battleSystem.animation.UltimateAnimation;
+import battleSystem.ultimate.Ultimate;
+import battleSystem.ultimate.UltimateFlamme;
+
+public class Flamme extends Entity implements UltimateCapable {
     private Scanner scanner = new Scanner(System.in);
     protected int boostAtkTicks = 0;
     protected boolean isPreparing = false; // Pour la Préparation Mentale
-    protected int ultiTicks = 5; //décompte de tour avant de pouvoir lancer l'attaque ultime
-    protected boolean isUltimateReady = false;
-    
+
+    private static final int ULTI_MAX = 5;
+    private int ultiTicks = ULTI_MAX;
+    private boolean isUltimateReady = false;
+
+    private final Ultimate ultimate = new UltimateFlamme();
 
     public Flamme(String name, int hp, int attackPoints, int defPoints) {
         super(name, hp, attackPoints, defPoints);
@@ -19,7 +28,7 @@ public class Flamme extends Entity {
         // Si on préparait une attaque au tour précédent, on déclenche l'effet
         if (isPreparing) {
             finaliserPreparationMentale(target);
-            return; // Le tour est consommé par l'attaque spéciale
+            return;
         }
 
         System.out.println("\n--- Tour de " + getName() + " (PV: " + this.getHp() + ") ---");
@@ -42,24 +51,23 @@ public class Flamme extends Entity {
             default:
                 System.out.println("Choix invalide, vous perdez votre tour !");
         }
-        
-        // Gestion du décompte du boost à la fin du tour
+
         if (boostAtkTicks > 0) {
             boostAtkTicks--;
             if (boostAtkTicks == 0) {
-                this.setAttackPoints(this.getAttackPoints() - 50); // On retire le bonus
+                this.setAttackPoints(this.getAttackPoints() - 50);
                 System.out.println("Le boost de l'Encens du Tigre prend fin.");
             }
         }
     }
-    
+
     public boolean isPreparing() {
         return isPreparing;
     }
-    
+
     public void briquet(Entity target) {
         System.out.println(getName() + " utilise son briquet sur " + target.getName() + " !");
-        this.attack(target); 
+        this.attack(target);
         target.setBurn(5);
     }
 
@@ -80,54 +88,79 @@ public class Flamme extends Entity {
 
     public void finaliserPreparationMentale(Entity target) {
         System.out.println(getName() + " relâche sa force mentale !");
-        
-        // Calcul des dégâts selon ta formule :
-        // ((ATK*2) + (TargetDef*0.2) + BonusBrulure(10% HP))
-        int degatsBase = (this.getAttackPoints() * 2) + (int)(target.getDefPoints() * 0.2);
-        
+
+        int degatsBase = (this.getAttackPoints() * 2) + (int) (target.getDefPoints() * 0.2);
+
         if (target.getBurnTicks() > 0) {
             degatsBase += (this.getHp() * 10) / 100;
             System.out.println("Bonus de dégâts appliqué car l'ennemi brûle !");
         }
 
         target.takeDamage(degatsBase);
-        this.isPreparing = false; // Reset l'état
+        this.isPreparing = false;
     }
-    
-    public void décompteUlti() {
-    	if (ultiTicks > 0) {
-    		ultiTicks--;
-    	}else {
-    		System.out.println("Ultimate Disponible");
-    		isUltimateReady = true;
-    	}
-    }
-    
-    public void ultim (Entity target) {
-    	if (isUltimateReady == true) {
-        	int planteFleche = this.getAttackPoints()*2;
-        	target.setArrow(true);
-        	target.takeDamage(planteFleche);
-        	ultiTicks = 5;
-        	isUltimateReady = false;
-    	}
 
-    }
-    
     public void checkUlti(Entity target) {
-        // Vérifie si le lanceur est en vie et si la cible a une flèche
         if (this.isAlive() && target.getArrow()) {
-            
             if (target.getHp() < 15) {
                 System.out.println("OVERKILL !");
-                target.takeDamage(target.getHp() + target.getDefPoints()); 
+                target.takeDamage(target.getHp() + target.getDefPoints());
             } else {
-               
-                System.out.println("La flèche brûle" + getName());
+                System.out.println("La flèche brûle " + getName());
                 target.setBurn(target.getBurnTicks() + 1);
             }
-            
-            target.setArrow(false); 
+            target.setArrow(false);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // UltimateCapable — délégation à l'objet Ultimate (composition)
+    // ------------------------------------------------------------------
+
+    @Override
+    public void useUltimate(Entity target, List<Entity> allTargets) {
+        ultimate.execute(this, target, allTargets);
+    }
+
+    @Override
+    public void décompteUlti() {
+        if (ultiTicks > 0) ultiTicks--;
+        if (ultiTicks == 0) isUltimateReady = true;
+    }
+
+    @Override
+    public boolean isUltimateReady() {
+        return isUltimateReady;
+    }
+
+    @Override
+    public void resetUlti() {
+        this.ultiTicks = ULTI_MAX;
+        this.isUltimateReady = false;
+    }
+
+    @Override
+    public int getUltiTicksRemaining() {
+        return ultiTicks;
+    }
+
+    @Override
+    public int getUltiTicksMax() {
+        return ULTI_MAX;
+    }
+
+    @Override
+    public String getUltimateName() {
+        return ultimate.getName();
+    }
+
+    @Override
+    public UltimateAnimation createUltimateAnimation() {
+        return ultimate.createUltimateAnimation();
+    }
+
+    @Override
+    public BackgroundAnimation createBackgroundAnimation() {
+        return ultimate.createBackgroundAnimation();
     }
 }

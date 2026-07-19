@@ -3,278 +3,341 @@ package battleSystem;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 import Entity.*;
-import java.io.OutputStream;
-import java.io.PrintStream;
 
-public class JeuImage extends JPanel implements ActionListener {
+/**
+ * Vue pure ("front") : aucune règle de jeu ici. JeuImage lit l'état exposé par
+ * {@link BattleSystem}, dessine (fond, sprites, {@link HealthBar}, flèche de ciblage,
+ * animations d'ultime) et transmet les entrées utilisateur au moteur. Les décisions
+ * (qui joue, qui peut être ciblé, quand une action se termine) appartiennent uniquement
+ * au BattleSystem via {@link BattleSystemListener}.
+ */
+public class JeuImage extends JPanel implements ActionListener, BattleSystemListener {
 
-    private Image background, flammeImg, tchingImg, bobImg, enemyImg;
-    private List<Entity> heroes;
-    private List<Entity> monsters;
-    private Entity target;
-    
-    private int heroIndexTurn = 0;
-    private boolean isPlayerPhase = true;
+    private Image background, flammeImg, tchingImg, bobImg, darkBobImg, enemyImg;
+    private final List<Entity> heroes;
+    private final List<Entity> monsters;
+    private final BattleSystem battleSystem;
+
+    private final HealthBar healthBar = new HealthBar();
+    private Entity hoveredEntity = null;
 
     private JLabel lblStatus;
-    private JTextArea txtConsole; 
-    private JPanel pnlActions;    
+    private ActionMenuPanel pnlActions;
+    private StyledConsole console;
     private double animationAngle = 0;
 
     public JeuImage(List<Entity> h, List<Entity> m) {
         this.heroes = h;
         this.monsters = m;
-        this.target = monsters.get(0);
-        
+        this.battleSystem = new BattleSystem(h, m);
+        this.battleSystem.setListener(this);
+
         setLayout(null);
+        setBackground(Color.BLACK);
 
-        // Chargement des images
-        try {
-            background = new ImageIcon(JeuImage.class.getResource("/assets/Background_Forest.jpg")).getImage();
-            flammeImg  = new ImageIcon(JeuImage.class.getResource("/assets/flamme.png")).getImage();
-            tchingImg  = new ImageIcon(JeuImage.class.getResource("/assets/tching.png")).getImage();
-            bobImg     = new ImageIcon(JeuImage.class.getResource("/assets/Bob.png")).getImage();
-            enemyImg   = new ImageIcon(JeuImage.class.getResource("/assets/Sprite_Monster.png")).getImage();
-        } catch (Exception e) {
-            System.err.println("Erreur de chargement des images : " + e.getMessage());
-        }
+        loadImages();
+        buildUI();
 
-        // --- ZONE DE TEXTE (TERMINAL) ---
-        txtConsole = new JTextArea();
-        txtConsole.setEditable(false);
-        txtConsole.setBackground(new Color(0, 0, 0, 180));
-        txtConsole.setForeground(Color.GREEN);
-        txtConsole.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
-        JScrollPane scrollPane = new JScrollPane(txtConsole);
-        scrollPane.setBounds(20, 420, 300, 130);
-        add(scrollPane);
+        addMouseMotionListener(new MouseAdapter() {
+            @Override public void mouseMoved(MouseEvent e) { handleHover(e.getPoint()); }
+        });
 
-        // Redirection de System.out vers txtConsole
-        redirectSystemOut();
+        addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) { handleClick(e.getPoint()); }
+        });
 
-        // --- PANNEAU DES ACTIONS ---
-        pnlActions = new JPanel();
-        pnlActions.setLayout(new FlowLayout());
-        pnlActions.setBounds(330, 480, 450, 80);
-        pnlActions.setOpaque(false);
-        add(pnlActions);
-
-        // --- BOUTONS DE CIBLE ---
-        for (int i = 0; i < monsters.size(); i++) {
-            Entity currentM = monsters.get(i);
-            JButton btnCible = new JButton(currentM.getName());
-            btnCible.setBounds(650, 50 + (i * 45), 120, 30);
-            btnCible.addActionListener(e -> {
-                if (currentM.isAlive()) {
-                    target = currentM;
-                    updateStatus();
-                }
-            });
-            add(btnCible);
-        }
-
-        lblStatus = new JLabel("", SwingConstants.CENTER);
-        lblStatus.setBounds(0, 10, 800, 30);
-        lblStatus.setForeground(Color.WHITE);
-        lblStatus.setFont(new Font("Arial", Font.BOLD, 18));
-        add(lblStatus);
-        
-        updateActions(); 
+        updateActionButtons();
         updateStatus();
 
         new Timer(16, this).start();
     }
 
-    private void redirectSystemOut() {
-        OutputStream out = new OutputStream() {
-            @Override
-            public void write(int b) {
-                txtConsole.append(String.valueOf((char) b));
-                txtConsole.setCaretPosition(txtConsole.getDocument().getLength());
-            }
-        };
-        System.setOut(new PrintStream(out, true));
-    }
-
-    private void updateStatus() {
-        if (heroIndexTurn < heroes.size()) {
-            Entity currentHero = heroes.get(heroIndexTurn);
-            lblStatus.setText("Tour de : " + currentHero.getName() + " | Cible : " + target.getName());
+    private void loadImages() {
+        try {
+            background = new ImageIcon(getClass().getResource("/assets/Background_Forest.jpg")).getImage();
+            flammeImg  = new ImageIcon(getClass().getResource("/assets/flamme.png")).getImage();
+            tchingImg  = new ImageIcon(getClass().getResource("/assets/tching.png")).getImage();
+            bobImg     = new ImageIcon(getClass().getResource("/assets/Bob.png")).getImage();
+            darkBobImg = new ImageIcon(getClass().getResource("/assets/Sprite_BoB_transfo.png")).getImage();
+            enemyImg   = new ImageIcon(getClass().getResource("/assets/Sprite_Monster.png")).getImage();
+            chefGobblin = new ImageIcon(getClass().getResource("/assets/Chef_Gobelin.png")).getImage();
+        } catch (Exception e) {
+            System.err.println("Images manquantes : " + e.getMessage());
         }
     }
 
-    // Affiche les boutons spécifiques au héros actuel
-    private void updateActions() {
+    private void buildUI() {
+        lblStatus = new JLabel("", SwingConstants.CENTER);
+        lblStatus.setBounds(0, 10, 1000, 30);
+        lblStatus.setForeground(Color.WHITE);
+        lblStatus.setFont(new Font("Arial", Font.BOLD, 18));
+        add(lblStatus);
+
+        pnlActions = new ActionMenuPanel();
+        pnlActions.setBounds(20, 560, 220, 160);
+        add(pnlActions);
+
+        console = new StyledConsole();
+        console.setBounds(260, 560, 500, 160);
+        add(console);
+    }
+
+    // ------------------------------------------------------------------
+    // Entrées utilisateur -> déléguées intégralement au BattleSystem
+    // ------------------------------------------------------------------
+
+    private void handleHover(Point p) {
+        Entity old = hoveredEntity;
+        hoveredEntity = null;
+        Map<Entity, Rectangle> bounds = allEntitiesWithBounds();
+        for (Map.Entry<Entity, Rectangle> entry : bounds.entrySet()) {
+            if (entry.getValue().contains(p)) {
+                hoveredEntity = entry.getKey();
+                break;
+            }
+        }
+        if (old != hoveredEntity) repaint();
+    }
+
+    private void handleClick(Point p) {
+        if (!battleSystem.isSelectingTarget()) return;
+        battleSystem.trySelectTarget(p, getMonsterHitboxes());
+    }
+
+    // ------------------------------------------------------------------
+    // Construction des boutons : aucun calcul de jeu, uniquement des appels au moteur
+    // ------------------------------------------------------------------
+
+    private void updateActionButtons() {
         pnlActions.removeAll();
-        if (!isPlayerPhase || heroIndexTurn >= heroes.size()) return;
+        Entity currentHero = battleSystem.getCurrentHero();
 
-        Entity currentHero = heroes.get(heroIndexTurn);
-        
-        if (currentHero instanceof Flamme) {
-            Flamme f = (Flamme) currentHero;
-            if (f.isPreparing()) {
-                // Si elle est prête, on lance l'attaque SANS attendre de clic
-                f.finaliserPreparationMentale(target);
-                
-                // On attend un petit peu pour que l'utilisateur puisse lire le texte 
-                // puis on passe au tour suivant automatiquement
-                Timer autoNext = new Timer(1500, e -> finirTourHeros());
-                autoNext.setRepeats(false);
-                autoNext.start();
-                
-                // On affiche un message d'attente sur l'interface
-                lblStatus.setText(f.getName() + " déclenche son attaque spéciale !");
-                return; // On sort de la méthode pour ne pas afficher de boutons
-            }
+        if (!battleSystem.isPlayerPhase() || currentHero == null) {
+            pnlActions.revalidate();
+            pnlActions.repaint();
+            return;
         }
-        
-        // Ajout des boutons selon le type de héros
-        if (currentHero instanceof Flamme) {
-        	Flamme f = (Flamme) currentHero;
-            ajouterBouton("Briquet", () -> f.briquet(target));
-            ajouterBouton("Encens du Tigre", () -> f.encensDuTigre());
-            ajouterBouton("Preparation mentale", () -> f.preparationMentale());
-        } else if (currentHero instanceof Tching) {
-        	Tching t = (Tching) currentHero;
-            ajouterBouton("Coup Rapide", () -> t.coupRapide(target));
-            ajouterBouton("Technique Tigre", () -> t.techniqueDuTigre(target));
-            ajouterBouton("Entrainement Intensif", () -> t.entrainementIntensif());
-        } else if (currentHero instanceof Bob) {
-        	Bob b = (Bob) currentHero;
-            ajouterBouton("Coup du Marteau", () -> b. coupDuMarteau(target));
-            ajouterBouton("Provocation", () -> b.activerProvocation());
+
+        pnlActions.addActionButton("Attaquer", ActionMenuPanel.Palette.BLUE,
+                () -> battleSystem.prepareAction("ATTACK"));
+
+        if (currentHero instanceof UltimateCapable) {
+            UltimateCapable u = (UltimateCapable) currentHero;
+            String label = u.isUltimateReady()
+                    ? "Ultime : " + u.getUltimateName()
+                    : "Ultime (" + u.getUltiTicksRemaining() + ")";
+            ButtonUlti btnUlti = new ButtonUlti(label);
+            btnUlti.setEnabled(u.isUltimateReady());
+            btnUlti.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btnUlti.addActionListener(e -> battleSystem.prepareAction("ULTI"));
+            pnlActions.add(btnUlti);
         }
 
         pnlActions.revalidate();
         pnlActions.repaint();
     }
 
-    private void ajouterBouton(String nom, Runnable action) {
-        JButton btn = new JButton(nom);
-        btn.addActionListener(e -> {
-            if (isPlayerPhase && target.isAlive()) {
-                action.run();
-                finirTourHeros();
-            }
-        });
-        pnlActions.add(btn);
-    }
-
-    private void finirTourHeros() {
-        heroes.get(heroIndexTurn).applyPostTurnEffects();
-        heroIndexTurn++;
-
-        if (heroIndexTurn >= heroes.size() || !isTeamAlive(monsters)) {
-            isPlayerPhase = false;
-            pnlActions.setVisible(false);
-            Timer pause = new Timer(1500, e -> tourDesMonstres());
-            pause.setRepeats(false);
-            pause.start();
-        } else {
-            if (!heroes.get(heroIndexTurn).isAlive()) finirTourHeros();
-            else {
-                updateActions();
-                updateStatus();
-            }
+    private void updateStatus() {
+        Entity currentHero = battleSystem.getCurrentHero();
+        Entity target = battleSystem.getTarget();
+        if (currentHero != null && target != null) {
+            lblStatus.setText("Tour de : " + currentHero.getName() + "   |   Cible : " + target.getName());
         }
     }
 
-    private void tourDesMonstres() {
-        for (Entity m : monsters) {
-            if (m.isAlive() && isTeamAlive(heroes)) {
-                Entity victim = findTargetForMonsters();
-                m.performTurn(victim);
-                m.applyPostTurnEffects();
-            }
-        }
-        heroIndexTurn = 0;
-        isPlayerPhase = true;
+    // ------------------------------------------------------------------
+    // BattleSystemListener : la vue réagit, elle ne décide jamais
+    // ------------------------------------------------------------------
+
+    @Override
+    public void onTargetSelectionStarted(String actionType) {
+        lblStatus.setText("Choisissez une cible avec la flèche !");
+        pnlActions.setVisible(false);
+    }
+
+    @Override
+    public void onTargetSelectionCancelled() {
         pnlActions.setVisible(true);
-        updateActions();
         updateStatus();
     }
 
-    private Entity findTargetForMonsters() {
-        for (Entity h : heroes) {
-            if (h instanceof Bob && h.isAlive() && ((Bob) h).isTaunting()) return h;
-        }
-        List<Entity> alive = heroes.stream().filter(Entity::isAlive).toList();
-        return alive.get((int)(Math.random() * alive.size()));
+    @Override
+    public void onUltimateStarted(Entity caster) {
+        lblStatus.setText(caster.getName() + " déclenche sa capacité ultime !");
     }
 
-    private boolean isTeamAlive(List<Entity> team) {
-        return team.stream().anyMatch(Entity::isAlive);
+    @Override
+    public void onUltimateEnded(Entity caster) {
+        pnlActions.setVisible(true);
     }
+
+    @Override
+    public void onTurnChanged(Entity currentHero, boolean isPlayerPhase) {
+        pnlActions.setVisible(isPlayerPhase);
+        updateActionButtons();
+        updateStatus();
+    }
+
+    @Override
+    public void onBattleEnded(boolean victory) {
+        pnlActions.setVisible(false);
+        lblStatus.setText(victory ? "VICTOIRE ! Les héros ont triomphé !" : "DEFAITE... Tous les héros sont tombés.");
+    }
+
+    // ------------------------------------------------------------------
+    // Rendu
+    // ------------------------------------------------------------------
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.drawImage(background, 0, 0, getWidth(), getHeight(), this);
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int shakeX = battleSystem.getAnimationManager().getShakeX();
+        int shakeY = battleSystem.getAnimationManager().getShakeY();
+        g2.translate(shakeX, shakeY);
+
+        if (background != null) g2.drawImage(background, 0, 0, getWidth(), getHeight(), this);
+
         animationAngle += 0.05;
 
-        // --- DESSIN DES HÉROS ---
+        drawHeroes(g2);
+        drawMonsters(g2);
+
+        if (battleSystem.isSelectingTarget()) {
+            drawSelectionArrows(g2);
+        }
+
+        g2.translate(-shakeX, -shakeY);
+
+        // Les animations d'ultime passent au-dessus de tout, sans double tremblement.
+        battleSystem.getAnimationManager().render(g2, getWidth(), getHeight(), this);
+    }
+
+    private void drawHeroes(Graphics2D g2) {
+        Entity currentHero = battleSystem.getCurrentHero();
+
         for (int i = 0; i < heroes.size(); i++) {
             Entity h = heroes.get(i);
-            if (h.isAlive()) {
-                int x = 50 + (i * 60);  
-                int y = 80 + (i * 120); 
-                int offset = (isPlayerPhase && i == heroIndexTurn) ? (int)(Math.sin(animationAngle) * 10) : 0;
-                
-                Image img = null;
-                int drawW = 100;
-                int drawH = 140; // Nouvelle hauteur de base pour les héros (plus grands et élancés)
+            if (!h.isAlive()) continue;
 
-                // Calcul de la largeur en fonction du ratio de ton image originale
-                if (h instanceof Flamme) {
-                    img = flammeImg;
-                    drawW = (int)(drawH * (621.0 / 1331.0)); // Garde les proportions de Flamme
-                } else if (h instanceof Tching) {
-                    img = tchingImg;
-                    drawW = (int)(drawH * (703.0 / 1614.0)); // Garde les proportions de Tching
-                } else if (h instanceof Bob) {
-                    img = bobImg;
-                    drawW = (int)(drawH * (1000.0 / 1900.0)); // Garde les proportions de Bob
-                }
+            int x = 50 + (i * 60);
+            int y = 80 + (i * 120);
+            int offset = (battleSystem.isPlayerPhase() && h == currentHero) ? (int) (Math.sin(animationAngle) * 10) : 0;
 
-                if (img != null) {
-                    g.drawImage(img, x, y + offset, drawW, drawH, this);
-                }
-                
-                g.setColor(Color.WHITE);
-                // J'ai centré un peu le texte par rapport à la nouvelle largeur
-                g.drawString(h.getName() + " (" + h.getHp() + " PV)", x - 10, y + offset - 5);
+            Image img;
+            int drawH = 140;
+            int drawW;
+
+            if (h instanceof Flamme) {
+                img = flammeImg;
+                drawW = (int) (drawH * (621.0 / 1331.0));
+            } else if (h instanceof Tching) {
+                img = tchingImg;
+                drawW = (int) (drawH * (703.0 / 1614.0));
+            } else if (h instanceof Bob) {
+                img = ((Bob) h).isTransformed() ? darkBobImg : bobImg;
+                drawW = (int) (drawH * (1000.0 / 1900.0));
+            } else {
+                img = null;
+                drawW = 80;
             }
-        }
 
-        // --- DESSIN DES MONSTRES ---
-        for (int i = 0; i < monsters.size(); i++) {
-            Entity m = monsters.get(i);
-            if (m.isAlive()) {
-                int x = getWidth() - 200 - (i * 50);
-                int y = 100 + (i * 120);
-                
-                // Le monstre est quasiment un carré (1749 x 1710)
-                int monsterH = 120;
-                int monsterW = (int)(monsterH * (1749.0 / 1710.0));
+            if (img != null) g2.drawImage(img, x, y + offset, drawW, drawH, this);
 
-                g.drawImage(enemyImg, x, y, monsterW, monsterH, this);
-                
-                g.setColor(Color.WHITE);
-                g.drawString(m.getName() + " : " + m.getHp() + " PV", x, y - 5);
-                
-                if (m == target) {
-                    g.setColor(Color.RED);
-                    // Le rectangle rouge s'adapte maintenant à la vraie taille du monstre
-                    g.drawRect(x, y, monsterW, monsterH);
-                }
+            boolean hovered = (h == hoveredEntity);
+            healthBar.draw(g2, x + drawW / 2, y + offset - 10, h, hovered);
+
+            if (hovered && h instanceof UltimateCapable) {
+                drawUltimateCountdown(g2, (UltimateCapable) h, x, y + offset - 55);
             }
+
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Arial", Font.PLAIN, 11));
+            g2.drawString(h.getName(), x - 5, y + offset + drawH + 14);
         }
     }
+
+    private void drawMonsters(Graphics2D g2) {
+        List<Rectangle> boxes = getMonsterHitboxes();
+        for (int i = 0; i < monsters.size(); i++) {
+            Entity m = monsters.get(i);
+            if (!m.isAlive()) continue;
+
+            Rectangle r = boxes.get(i);
+            if (enemyImg != null) g2.drawImage(enemyImg, r.x, r.y, r.width, r.height, this);
+
+            boolean hovered = (m == hoveredEntity);
+            healthBar.draw(g2, r.x + r.width / 2, r.y - 10, m, hovered);
+        }
+    }
+
+    private void drawUltimateCountdown(Graphics2D g2, UltimateCapable u, int x, int y) {
+        g2.setFont(new Font("Arial", Font.BOLD, 13));
+        String text = u.isUltimateReady()
+                ? "ULTIME : prêt !"
+                : "ULTIME : " + u.getUltiTicksRemaining() + " tour(s)";
+        g2.setColor(new Color(0, 0, 0, 160));
+        g2.fillRoundRect(x - 5, y - 15, 150, 20, 8, 8);
+        g2.setColor(u.isUltimateReady() ? Color.YELLOW : Color.LIGHT_GRAY);
+        g2.drawString(text, x, y);
+    }
+
+    private void drawSelectionArrows(Graphics2D g2) {
+        List<Rectangle> boxes = getMonsterHitboxes();
+        for (int i = 0; i < monsters.size(); i++) {
+            Entity m = monsters.get(i);
+            if (!m.isAlive()) continue;
+            Rectangle r = boxes.get(i);
+            drawFigmaArrow(g2, r.x + r.width / 2, r.y - 20);
+        }
+    }
+
+    private void drawFigmaArrow(Graphics2D g2, int x, int y) {
+        g2.setColor(new Color(167, 156, 255, 178));
+        g2.fillPolygon(new int[]{x - 12, x + 12, x}, new int[]{y - 22, y - 22, y}, 3);
+        g2.setColor(Color.YELLOW);
+        g2.fillPolygon(new int[]{x - 10, x + 10, x}, new int[]{y - 20, y - 20, y + 2}, 3);
+    }
+
+    // ------------------------------------------------------------------
+    // Zones cliquables / survolables (calcul purement visuel)
+    // ------------------------------------------------------------------
+
+    private List<Rectangle> getMonsterHitboxes() {
+        List<Rectangle> hitboxes = new ArrayList<>();
+        for (int i = 0; i < monsters.size(); i++) {
+            hitboxes.add(new Rectangle(getWidth() - 200 - (i * 50), 100 + (i * 120), 120, 120));
+        }
+        return hitboxes;
+    }
+
+    private Map<Entity, Rectangle> allEntitiesWithBounds() {
+        Map<Entity, Rectangle> map = new LinkedHashMap<>();
+        for (int i = 0; i < heroes.size(); i++) {
+            Entity h = heroes.get(i);
+            if (!h.isAlive()) continue;
+            int x = 50 + (i * 60);
+            int y = 80 + (i * 120);
+            map.put(h, new Rectangle(x, y, 100, 140));
+        }
+        List<Rectangle> monsterBoxes = getMonsterHitboxes();
+        for (int i = 0; i < monsters.size(); i++) {
+            if (monsters.get(i).isAlive()) map.put(monsters.get(i), monsterBoxes.get(i));
+        }
+        return map;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
+        battleSystem.update();
         repaint();
     }
 }

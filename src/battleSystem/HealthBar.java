@@ -4,60 +4,73 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+import Entity.Entity;
+
 /**
- * Barre de vie stylisée avec dégradé basée sur le design Figma.
+ * Barre de vie stylisée avec dégradé et gestion du survol.
  */
 public class HealthBar {
-    private int width = 150;
-    private int height = 15;
+    private int width = 120;
+    private int height = 12;
     private int cornerRadius = 8;
-    
-    // Couleurs du dégradé Figma (Rose/Violet)
-    private static final Color COLOR_START = new Color(255, 105, 180); // Rose
-    private static final Color COLOR_END = new Color(138, 43, 226);   // Violet
-    private static final Color COLOR_BG = new Color(50, 50, 50, 150); // Fond sombre transparent
 
-    public void draw(Graphics2D g2, int x, int y, int currentHp, int maxHp) {
+    private static final Color COLOR_START = new Color(255, 105, 180); // Rose
+    private static final Color COLOR_END = new Color(138, 43, 226);    // Violet
+    private static final Color COLOR_BG = new Color(50, 50, 50, 180);  // Fond sombre
+
+    /**
+     * Dessine la barre de vie.
+     *
+     * @param g2        contexte graphique
+     * @param x         position X (centrée par rapport à l'entité)
+     * @param y         position Y (au-dessus de l'entité)
+     * @param h         l'entité pour récupérer les PV / PV max / nom
+     * @param isHovered état de survol pour l'animation
+     */
+    public void draw(Graphics2D g2, int x, int y, Entity h, boolean isHovered) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // 1. Dessiner le fond de la barre
+        int currentHeight = isHovered ? 20 : 12;
+        int currentWidth = isHovered ? 140 : 120;
+        int drawX = x - (currentWidth / 2);
+        int drawY = y - currentHeight;
+
+        float hpRatio = Math.max(0, Math.min(1, (float) h.getHp() / h.getMaxHp()));
+
         g2.setColor(COLOR_BG);
-        g2.fill(new RoundRectangle2D.Double(x, y, width, height, cornerRadius, cornerRadius));
+        g2.fill(new RoundRectangle2D.Double(drawX, drawY, currentWidth, currentHeight, cornerRadius, cornerRadius));
 
-        // 2. Calculer la largeur de la barre de vie actuelle
-        double percentage = Math.max(0, Math.min(1, (double) currentHp / maxHp));
-        int currentWidth = (int) (width * percentage);
-
-        if (currentWidth > 0) {
-            // 3. Créer le dégradé
+        if (hpRatio > 0) {
             GradientPaint gradient = new GradientPaint(
-                x, y, COLOR_START, 
-                x + width, y, COLOR_END
+                    drawX, drawY, COLOR_START,
+                    drawX + currentWidth, drawY, COLOR_END
             );
             g2.setPaint(gradient);
-            
-            // 4. Dessiner la partie remplie
-            // On utilise un clip pour s'assurer que le remplissage respecte les bords arrondis
+
             Shape oldClip = g2.getClip();
-            RoundRectangle2D barShape = new RoundRectangle2D.Double(x, y, width, height, cornerRadius, cornerRadius);
+            RoundRectangle2D barShape = new RoundRectangle2D.Double(drawX, drawY, currentWidth, currentHeight, cornerRadius, cornerRadius);
             g2.clip(barShape);
-            g2.fill(new Rectangle(x, y, currentWidth, height));
+
+            g2.fill(new Rectangle(drawX, drawY, (int) (currentWidth * hpRatio), currentHeight));
+
             g2.setClip(oldClip);
         }
 
-        // 5. Dessiner une bordure fine
-        g2.setColor(new Color(255, 255, 255, 80));
-        g2.setStroke(new BasicStroke(1.5f));
-        g2.draw(new RoundRectangle2D.Double(x, y, width, height, cornerRadius, cornerRadius));
+        if (isHovered) {
+            g2.setColor(Color.WHITE);
+            g2.setStroke(new BasicStroke(2f));
+            g2.draw(new RoundRectangle2D.Double(drawX, drawY, currentWidth, currentHeight, cornerRadius, cornerRadius));
 
-        // 6. Afficher le texte HP au-dessus ou à côté (Optionnel, ici centré au-dessus)
-        g2.setFont(new Font("Arial", Font.BOLD, 12));
+            g2.setFont(new Font("Arial", Font.BOLD, 14));
+            g2.drawString(h.getName(), drawX, drawY - 8);
+        }
+
         g2.setColor(Color.WHITE);
-        String hpText = currentHp + " / " + maxHp;
+        g2.setFont(new Font("Arial", Font.BOLD, 10));
+        String hpText = h.getHp() + " / " + h.getMaxHp() + " HP";
         FontMetrics fm = g2.getFontMetrics();
-        g2.drawString(hpText, x + (width - fm.stringWidth(hpText)) / 2, y - 5);
+        int tx = drawX + (currentWidth - fm.stringWidth(hpText)) / 2;
+        int ty = drawY + (currentHeight / 2) + (fm.getAscent() / 2) - 2;
+        g2.drawString(hpText, tx, ty);
     }
-
-    public int getWidth() { return width; }
-    public int getHeight() { return height; }
 }

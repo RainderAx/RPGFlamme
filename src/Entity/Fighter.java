@@ -7,7 +7,6 @@ public class Fighter extends Entity {
 
     @Override
     public void performTurn(Entity target) {
-        // Logique simple : on attaque la cible
         this.attack(target);
     }
 }
