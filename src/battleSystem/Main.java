@@ -15,9 +15,9 @@ public class Main {
         heroes.add(new Bob("Bob le chef", 600, 20, 20));
 
         List<Entity> monsters = new ArrayList<>();
-        monsters.add(new Fighter("Encens Tching", 150, 15, 5));
-        monsters.add(new Fighter("Encens Flamme", 250, 18, 10));
-        monsters.add(new Fighter("Encens Bob", 500, 25, 15));
+        monsters.add(new Gobelin("GobA", 150, 20, 10));
+        
+        monsters.add(new chefGobelin("GobC", 300, 40, 20));
 
         JFrame frame = new JFrame("RPG Battle System - Team Fight");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
