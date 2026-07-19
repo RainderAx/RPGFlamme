@@ -65,7 +65,13 @@ public class Bob extends Entity implements UltimateCapable {
         target.takeDamage(damage);
         this.isTaunting = false;
     }
-
+    
+    public void perceuse(Entity target) {
+    	this.setDefPoints(getDefPoints() + 10);
+    	int damage = 80 +target.getDefPoints() + this.getDefPoints();
+    	
+    	target.takeDamage(damage);
+    }
     public void activerProvocation() {
         System.out.println(getName() + " hurle : 'Tapez-moi si vous l'osez !'");
         this.isTaunting = true;
