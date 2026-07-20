@@ -19,11 +19,7 @@ public class UltimateFlamme extends Ultimate {
         target.takeDamage(degats);
         target.setBurn(8);
     }
-    /**
-     * Vérifie si le lanceur est en vie et si la cible a une flèche.
-     * Si la cible a moins de 15% de sa vie max, c'est un OVERKILL.
-     * Sinon, la flèche applique une brûlure supplémentaire.
-     */
+  
     public void checkUlti(Entity caster, Entity target) {
         if (caster.isAlive() && target.getArrow()) {
             if (target.getHp() < 15 * target.getMaxHp() / 100) {
@@ -31,6 +27,19 @@ public class UltimateFlamme extends Ultimate {
                 target.takeDamage(target.getHp() + target.getDefPoints());
             } else {
                 System.out.println("La flèche brûle " + target.getName());
+                target.setBurn(target.getBurnTicks() + 1);
+            }
+            target.setArrow(false);
+        }
+    }
+
+    public void checkUlti(Entity target) {
+        if (this.isAlive() && target.getArrow()) {
+            if (target.getHp() < 15) {
+                System.out.println("OVERKILL !");
+                target.takeDamage(target.getHp() + target.getDefPoints());
+            } else {
+                System.out.println("La flèche brûle " + getName());  // ❌ getName() = Flamme (this), pas la cible
                 target.setBurn(target.getBurnTicks() + 1);
             }
             target.setArrow(false);
