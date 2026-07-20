@@ -13,7 +13,7 @@ public class Bob extends Entity implements UltimateCapable {
     private boolean isTransformed = false;
     private Scanner scanner = new Scanner(System.in);
 
-    private static final int ULTI_MAX = 5;
+    private static final int ULTI_MAX = 3;
     private int ultiTicks = ULTI_MAX;
     private boolean isUltimateReady = false;
 

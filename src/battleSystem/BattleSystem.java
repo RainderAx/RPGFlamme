@@ -131,6 +131,7 @@ public class BattleSystem {
                 case "MARTEAU": b.coupDuMarteau(target); break;
                 case "PROVOC": b.activerProvocation(); break;
                 case "SUPER_PROVOC": b.superProvoc(); break;
+                case "PERCEUSE": b.perceuse(target);break;
             }
         } else if (hero instanceof Tching) {
             Tching t = (Tching) hero;
