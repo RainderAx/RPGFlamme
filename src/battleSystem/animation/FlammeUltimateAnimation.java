@@ -8,7 +8,7 @@ import java.awt.Image;
 import java.awt.image.ImageObserver;
 import java.util.Random;
 
-/** Animation de premier plan de l'ultime de Flamme : flèche géante + particules + explosion + écran rouge. */
+
 public class FlammeUltimateAnimation extends UltimateAnimation {
     private final Random rand = new Random();
     private Image flammeImg;
@@ -16,7 +16,7 @@ public class FlammeUltimateAnimation extends UltimateAnimation {
     public FlammeUltimateAnimation() {
         super(140);
         try {
-            flammeImg = new ImageIcon(getClass().getResource("/assets/flamme.png")).getImage();
+            flammeImg = new ImageIcon(getClass().getResource("/assets/Flamme_Ultimate.png")).getImage();
         } catch (Exception e) {
             System.err.println("Sprite flamme manquant : " + e.getMessage());
         }
