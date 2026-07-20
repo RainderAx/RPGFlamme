@@ -9,16 +9,12 @@ import javax.swing.Timer;
 
 import Entity.Bob;
 import Entity.Entity;
+import Entity.Flamme;
+import Entity.Tching;
 import Entity.UltimateCapable;
 import battleSystem.animation.AnimationManager;
 
-/**
- * Moteur de combat indépendant ("back") : gère l'intégralité de la logique
- * (tours, sélection de cible, ultimes, animations, verrouillage des commandes...).
- * <p>
- * JeuImage ("front") ne fait qu'observer cet objet, le dessiner, et lui transmettre
- * les entrées utilisateur. Aucune règle de jeu ne doit vivre dans la vue.
- */
+
 public class BattleSystem {
 
     private final List<Entity> heroes;
@@ -45,16 +41,11 @@ public class BattleSystem {
         this.listener = listener;
     }
 
-    /** À appeler à chaque tick (~16 ms) depuis la vue, pour faire vivre les animations. */
     public void update() {
         animationManager.update();
     }
 
-    // ------------------------------------------------------------------
-    // Actions déclenchées par la vue (boutons)
-    // ------------------------------------------------------------------
 
-    /** Prépare une action ("ATTACK" ou "ULTI") : le joueur doit ensuite cliquer une cible. */
     public void prepareAction(String actionType) {
         if (commandsLocked || !isPlayerPhase) return;
 
@@ -79,7 +70,7 @@ public class BattleSystem {
         if (listener != null) listener.onTargetSelectionCancelled();
     }
 
-    /** Appelée par la vue lors d'un clic sur le plateau. Retourne la cible choisie, ou null. */
+
     public Entity trySelectTarget(Point click, List<Rectangle> monsterHitboxes) {
         if (!isSelectingTarget || commandsLocked) return null;
 
@@ -94,10 +85,18 @@ public class BattleSystem {
         }
         return null;
     }
-
-    // ------------------------------------------------------------------
-    // Exécution des actions
-    // ------------------------------------------------------------------
+    private void triggerArrowChecks() {
+        for (Entity h : heroes) {
+            if (h instanceof Flamme) {
+                Flamme flamme = (Flamme) h;
+                for (Entity m : monsters) {
+                    if (m.isAlive()) {
+                        flamme.checkUlti(m);
+                    }
+                }
+            }
+        }
+    }
 
     private void executePendingAction(Entity chosenTarget) {
         Entity currentHero = getCurrentHero();
@@ -111,7 +110,7 @@ public class BattleSystem {
             commandsLocked = false;
             finishHeroTurn();
         } else {
-            // Actions spécifiques aux héros
+     
             executeHeroSpecificAction(currentHero, chosenTarget, pendingAction);
             commandsLocked = false;
             finishHeroTurn();
@@ -147,7 +146,7 @@ public class BattleSystem {
     private void launchUltimate(Entity caster, Entity chosenTarget) {
         UltimateCapable uCaster = (UltimateCapable) caster;
 
-        // Le son est joué ICI, exactement au moment de l'activation — jamais au simple clic du bouton.
+        
         SoundPlayer.play("/assets/UltiSound.wav");
         if (listener != null) listener.onUltimateStarted(caster);
 
@@ -170,6 +169,7 @@ public class BattleSystem {
 
         h.applyPostTurnEffects();
         if (h instanceof UltimateCapable) ((UltimateCapable) h).décompteUlti();
+        triggerArrowChecks(); 
 
         heroIndexTurn++;
 
@@ -193,6 +193,7 @@ public class BattleSystem {
                 Entity victim = findTargetForMonsters();
                 m.performTurn(victim);
                 m.applyPostTurnEffects();
+                triggerArrowChecks();
             }
         }
 
@@ -228,10 +229,6 @@ public class BattleSystem {
     private boolean isTeamAlive(List<Entity> team) {
         return team.stream().anyMatch(Entity::isAlive);
     }
-
-    // ------------------------------------------------------------------
-    // Accesseurs en lecture seule pour la vue
-    // ------------------------------------------------------------------
 
     public Entity getCurrentHero() {
         return (heroIndexTurn < heroes.size()) ? heroes.get(heroIndexTurn) : null;

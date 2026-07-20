@@ -8,7 +8,7 @@ import battleSystem.animation.FlammeBackgroundAnimation;
 import battleSystem.animation.FlammeUltimateAnimation;
 import battleSystem.animation.UltimateAnimation;
 
-/** Capacité ultime de Flamme : immense flèche ardente qui plante et brûle la cible. */
+
 public class UltimateFlamme extends Ultimate {
 
     @Override
@@ -33,18 +33,6 @@ public class UltimateFlamme extends Ultimate {
         }
     }
 
-    public void checkUlti(Entity target) {
-        if (this.isAlive() && target.getArrow()) {
-            if (target.getHp() < 15) {
-                System.out.println("OVERKILL !");
-                target.takeDamage(target.getHp() + target.getDefPoints());
-            } else {
-                System.out.println("La flèche brûle " + getName());  // ❌ getName() = Flamme (this), pas la cible
-                target.setBurn(target.getBurnTicks() + 1);
-            }
-            target.setArrow(false);
-        }
-    }
 
     @Override
     public UltimateAnimation createUltimateAnimation() {

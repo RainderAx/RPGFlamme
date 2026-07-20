@@ -11,9 +11,8 @@ import battleSystem.ultimate.UltimateFlamme;
 public class Flamme extends Entity implements UltimateCapable {
     private Scanner scanner = new Scanner(System.in);
     protected int boostAtkTicks = 0;
-    protected boolean isPreparing = false; // Pour la Préparation Mentale
-
-    private static final int ULTI_MAX = 3;
+    protected boolean isPreparing = false; 
+    private static final int ULTI_MAX = 2;
     private int ultiTicks = ULTI_MAX;
     private boolean isUltimateReady = false;
 
@@ -25,7 +24,7 @@ public class Flamme extends Entity implements UltimateCapable {
 
     @Override
     public void performTurn(Entity target) {
-        // Si on préparait une attaque au tour précédent, on déclenche l'effet
+     
         if (isPreparing) {
             finaliserPreparationMentale(target);
             return;
@@ -101,10 +100,18 @@ public class Flamme extends Entity implements UltimateCapable {
     }
 
     public void checkUlti(Entity target) {
-        if (ultimate instanceof UltimateFlamme) {
-            ((UltimateFlamme) ultimate).checkUlti(this, target);
+        if (this.isAlive() && target.getArrow()) {
+            if (target.getHp() < 15) {
+                System.out.println("OVERKILL !");
+                target.takeDamage(target.getHp() + target.getDefPoints());
+            } else {
+                System.out.println("La flèche brûle" + this.getName());   
+                target.setBurn(target.getBurnTicks() + 1);
+            }
+            target.setArrow(false);
         }
     }
+    
 
     // ------------------------------------------------------------------
     // UltimateCapable — délégation à l'objet Ultimate (composition)
