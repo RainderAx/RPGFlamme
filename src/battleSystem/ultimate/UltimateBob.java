@@ -9,7 +9,6 @@ import battleSystem.animation.BobBackgroundAnimation;
 import battleSystem.animation.BobUltimateAnimation;
 import battleSystem.animation.UltimateAnimation;
 
-/** Capacité ultime de Bob : transformation en "Super Bob" + coup dévastateur. */
 public class UltimateBob extends Ultimate {
 
     @Override
@@ -17,7 +16,7 @@ public class UltimateBob extends Ultimate {
         if (caster instanceof Bob) {
             ((Bob) caster).activerTransformation();
         }
-        int degats = (caster.getAttackPoints() * 3) + target.getDefPoints();
+        int degats = (caster.getDefPoints() * 2) + target.getDefPoints();
         System.out.println(caster.getName() + " déchaîne SUPER BOB sur " + target.getName() + " !");
         target.takeDamage(degats);
     }

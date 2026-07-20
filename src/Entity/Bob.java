@@ -12,8 +12,11 @@ public class Bob extends Entity implements UltimateCapable {
     private boolean isTaunting = false;
     private boolean isTransformed = false;
     private Scanner scanner = new Scanner(System.in);
+    
+    private static final int TRANSFORM_DURATION = 3;
+    private int transformTicksRemaining = 0;
 
-    private static final int ULTI_MAX = 3;
+    private static final int ULTI_MAX = 1;
     private int ultiTicks = ULTI_MAX;
     private boolean isUltimateReady = false;
 
@@ -54,9 +57,19 @@ public class Bob extends Entity implements UltimateCapable {
         return isTransformed;
     }
 
-    /** Appelé par UltimateBob lors de l'exécution de l'ultime (composition, pas d'if/else dans le moteur). */
     public void activerTransformation() {
         this.isTransformed = true;
+        this.transformTicksRemaining = TRANSFORM_DURATION;
+    }
+    
+    public void décompteTransformation() {
+        if (!isTransformed) return;
+        transformTicksRemaining--;
+        if (transformTicksRemaining <= 0) {
+            isTransformed = false;
+            transformTicksRemaining = 0;
+            System.out.println(getName() + " n'est plus transformé !");
+        }
     }
 
     public void coupDuMarteau(Entity target) {

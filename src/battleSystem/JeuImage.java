@@ -10,16 +10,10 @@ import java.util.Map;
 
 import Entity.*;
 
-/**
- * Vue pure ("front") : aucune règle de jeu ici. JeuImage lit l'état exposé par
- * {@link BattleSystem}, dessine (fond, sprites, {@link HealthBar}, flèche de ciblage,
- * animations d'ultime) et transmet les entrées utilisateur au moteur. Les décisions
- * (qui joue, qui peut être ciblé, quand une action se termine) appartiennent uniquement
- * au BattleSystem via {@link BattleSystemListener}.
- */
+
 public class JeuImage extends JPanel implements ActionListener, BattleSystemListener {
 
-    private Image background, flammeImg, tchingImg, bobImg, darkBobImg, enemyImg;
+    private Image background, flammeImg, tchingImg, bobImg, darkBobImg, enemyImg, chefGobelin;
     private final List<Entity> heroes;
     private final List<Entity> monsters;
     private final BattleSystem battleSystem;
@@ -66,7 +60,7 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             bobImg     = new ImageIcon(getClass().getResource("/assets/Bob.png")).getImage();
             darkBobImg = new ImageIcon(getClass().getResource("/assets/Sprite_BoB_transfo.png")).getImage();
             enemyImg   = new ImageIcon(getClass().getResource("/assets/Sprite_Monster.png")).getImage();
-            chefGobblin = new ImageIcon(getClass().getResource("/assets/Chef_Gobelin.png")).getImage();
+            chefGobelin = new ImageIcon(getClass().getResource("/assets/Chef_Gobelin.png")).getImage();
         } catch (Exception e) {
             System.err.println("Images manquantes : " + e.getMessage());
         }
@@ -88,9 +82,6 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         add(console);
     }
 
-    // ------------------------------------------------------------------
-    // Entrées utilisateur -> déléguées intégralement au BattleSystem
-    // ------------------------------------------------------------------
 
     private void handleHover(Point p) {
         Entity old = hoveredEntity;
@@ -110,9 +101,7 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         battleSystem.trySelectTarget(p, getMonsterHitboxes());
     }
 
-    // ------------------------------------------------------------------
-    // Construction des boutons : aucun calcul de jeu, uniquement des appels au moteur
-    // ------------------------------------------------------------------
+
 
     private void updateActionButtons() {
         pnlActions.removeAll();
@@ -124,8 +113,8 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             return;
         }
 
-        pnlActions.addActionButton("Attaquer", ActionMenuPanel.Palette.BLUE,
-                () -> showHeroMethods(currentHero));
+
+        pnlActions.addActionButton("Attaquer", ActionMenuPanel.Palette.BLUE, () -> showHeroMethods(currentHero));
 
         if (currentHero instanceof UltimateCapable) {
             UltimateCapable u = (UltimateCapable) currentHero;
@@ -146,26 +135,28 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
     private void showHeroMethods(Entity hero) {
         pnlActions.removeAll();
         
-        // Option pour revenir en arrière
+       
         pnlActions.addActionButton("< Retour", Color.GRAY, this::updateActionButtons);
         
-        // Attaque de base
-        pnlActions.addActionButton("Attaque de base", ActionMenuPanel.Palette.BLUE, 
-                () -> battleSystem.prepareAction("ATTACK"));
 
         if (hero instanceof Flamme) {
             pnlActions.addActionButton("Briquet", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("BRIQUET"));
             pnlActions.addActionButton("Encens", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("ENCENS"));
             pnlActions.addActionButton("Prep. Mentale", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("PREP_MENTALE"));
+            
         } else if (hero instanceof Bob) {
+        	Bob b = (Bob) hero;
             pnlActions.addActionButton("Marteau", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("MARTEAU"));
             pnlActions.addActionButton("Provoc", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("PROVOC"));
-            pnlActions.addActionButton("Super Provoc", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("SUPER_PROVOC"));
+            if (b.isTransformed()) {
+                pnlActions.addActionButton("Super Provoc", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("SUPER_PROVOC"));
+                pnlActions.addActionButton("Perceuse", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("PERCEUSE"));
+            }
+            
         } else if (hero instanceof Tching) {
             pnlActions.addActionButton("Coup Rapide", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("RAPIDE"));
             pnlActions.addActionButton("Technique Tigre", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("TIGRE"));
             pnlActions.addActionButton("Entraînement", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("ENTRAINEMENT"));
-            pnlActions.addActionButton("Attaque Zone", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("ZONE"));
         }
 
         pnlActions.revalidate();
@@ -180,9 +171,6 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         }
     }
 
-    // ------------------------------------------------------------------
-    // BattleSystemListener : la vue réagit, elle ne décide jamais
-    // ------------------------------------------------------------------
 
     @Override
     public void onTargetSelectionStarted(String actionType) {
@@ -219,9 +207,6 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         lblStatus.setText(victory ? "VICTOIRE ! Les héros ont triomphé !" : "DEFAITE... Tous les héros sont tombés.");
     }
 
-    // ------------------------------------------------------------------
-    // Rendu
-    // ------------------------------------------------------------------
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -246,7 +231,7 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
 
         g2.translate(-shakeX, -shakeY);
 
-        // Les animations d'ultime passent au-dessus de tout, sans double tremblement.
+     
         battleSystem.getAnimationManager().render(g2, getWidth(), getHeight(), this);
     }
 
@@ -301,7 +286,10 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             if (!m.isAlive()) continue;
 
             Rectangle r = boxes.get(i);
-            if (enemyImg != null) g2.drawImage(enemyImg, r.x, r.y, r.width, r.height, this);
+
+
+            Image img = (m instanceof chefGobelin) ? chefGobelin : enemyImg;
+            if (img != null) g2.drawImage(img, r.x, r.y, r.width, r.height, this);
 
             boolean hovered = (m == hoveredEntity);
             healthBar.draw(g2, r.x + r.width / 2, r.y - 10, m, hovered);
@@ -336,9 +324,6 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         g2.fillPolygon(new int[]{x - 10, x + 10, x}, new int[]{y - 20, y - 20, y + 2}, 3);
     }
 
-    // ------------------------------------------------------------------
-    // Zones cliquables / survolables (calcul purement visuel)
-    // ------------------------------------------------------------------
 
     private List<Rectangle> getMonsterHitboxes() {
         List<Rectangle> hitboxes = new ArrayList<>();
