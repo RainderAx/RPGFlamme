@@ -141,22 +141,23 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
 
         if (hero instanceof Flamme) {
             pnlActions.addActionButton("Briquet", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("BRIQUET"));
-            pnlActions.addActionButton("Encens", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("ENCENS"));
-            pnlActions.addActionButton("Prep. Mentale", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("PREP_MENTALE"));
+            pnlActions.addActionButton("Encens", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("ENCENS"));
+            pnlActions.addActionButton("Prep. Mentale", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("PREP_MENTALE"));
             
         } else if (hero instanceof Bob) {
-        	Bob b = (Bob) hero;
-            pnlActions.addActionButton("Marteau", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("MARTEAU"));
-            pnlActions.addActionButton("Provoc", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("PROVOC"));
+            Bob b = (Bob) hero;
             if (b.isTransformed()) {
                 pnlActions.addActionButton("Super Provoc", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("SUPER_PROVOC"));
                 pnlActions.addActionButton("Perceuse", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("PERCEUSE"));
+            } else {
+                pnlActions.addActionButton("Marteau", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("MARTEAU"));
+                pnlActions.addActionButton("Provoc", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("PROVOC"));
             }
             
         } else if (hero instanceof Tching) {
             pnlActions.addActionButton("Coup Rapide", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("RAPIDE"));
-            pnlActions.addActionButton("Technique Tigre", ActionMenuPanel.Palette.TEAL, () -> battleSystem.prepareAction("TIGRE"));
-            pnlActions.addActionButton("Entraînement", ActionMenuPanel.Palette.PURPLE, () -> battleSystem.prepareAction("ENTRAINEMENT"));
+            pnlActions.addActionButton("Technique Tigre", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("TIGRE"));
+            pnlActions.addActionButton("Entraînement", ActionMenuPanel.Palette.ORANGE, () -> battleSystem.prepareAction("ENTRAINEMENT"));
         }
 
         pnlActions.revalidate();
