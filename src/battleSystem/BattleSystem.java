@@ -12,6 +12,8 @@ import Entity.Entity;
 import Entity.Flamme;
 import Entity.Tching;
 import Entity.UltimateCapable;
+import Entity.Gobelin;
+import Entity.chefGobelin;
 import battleSystem.animation.AnimationManager;
 
 
@@ -194,6 +196,10 @@ public class BattleSystem {
                 Entity victim = findTargetForMonsters();
                 m.performTurn(victim);
                 m.applyPostTurnEffects();
+                if (m instanceof chefGobelin) {
+                    ((chefGobelin) m).invocation(gobelin);
+                    chefGobelin.attack(victim);
+                }
                 triggerArrowChecks();
             }
         }

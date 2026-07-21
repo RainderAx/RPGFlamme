@@ -207,6 +207,9 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
         lblStatus.setText(victory ? "VICTOIRE ! Les héros ont triomphé !" : "DEFAITE... Tous les héros sont tombés.");
     }
 
+    // ------------------------------------------------------------------
+    // Rendu
+    // ------------------------------------------------------------------
 
     @Override
     protected void paintComponent(Graphics g) {
