@@ -172,6 +172,9 @@ public class BattleSystem {
 
         h.applyPostTurnEffects();
         if (h instanceof UltimateCapable) ((UltimateCapable) h).décompteUlti();
+
+        if (h instanceof Bob) ((Bob) h).décompteTransformation();
+        
         triggerArrowChecks(); 
 
         heroIndexTurn++;
