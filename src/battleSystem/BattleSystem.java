@@ -7,6 +7,8 @@ import java.util.Random;
 
 import javax.swing.Timer;
 
+import java.util.ArrayList;
+
 import Entity.Bob;
 import Entity.Entity;
 import Entity.Flamme;
@@ -174,7 +176,7 @@ public class BattleSystem {
         if (h instanceof UltimateCapable) ((UltimateCapable) h).décompteUlti();
 
         if (h instanceof Bob) ((Bob) h).décompteTransformation();
-        
+
         triggerArrowChecks(); 
 
         heroIndexTurn++;
@@ -194,17 +196,23 @@ public class BattleSystem {
     }
 
     private void monstersTurn() {
+        List<Entity> newSummons = new ArrayList<>();
+
         for (Entity m : monsters) {
             if (m.isAlive() && isTeamAlive(heroes)) {
                 Entity victim = findTargetForMonsters();
-                m.performTurn(victim);
+                m.performTurn(victim);       
                 m.applyPostTurnEffects();
-                if (m instanceof chefGobelin) {
-                    ((chefGobelin) m).invocation(gobelin);
-                    chefGobelin.attack(victim);
-                }
                 triggerArrowChecks();
+
+                if (m instanceof chefGobelin) {
+                    ((chefGobelin) m).invocation(newSummons);
+                }
             }
+        }
+
+        if (!newSummons.isEmpty()) {
+            monsters.addAll(newSummons);
         }
 
         heroIndexTurn = 0;
