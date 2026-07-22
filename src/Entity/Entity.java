@@ -8,10 +8,12 @@ public abstract class Entity {
     private final int maxHp;
     private int attackPoints;
     private int defPoints;
+    private final int baseAttackPoints;   
+    private final int baseDefPoints;      
     protected int burnTicks = 0;
     protected static final Random RAND = new Random();
     protected boolean arrow = false;
-    protected boolean isTargeted = false; // Pour l'affichage de la flèche
+    protected boolean isTargeted = false; 
 
     public Entity(String name, int hp, int attackPoints, int defPoints) {
         this.name = name;
@@ -19,6 +21,8 @@ public abstract class Entity {
         this.maxHp = hp;
         this.attackPoints = attackPoints;
         this.defPoints = defPoints;
+        this.baseAttackPoints = attackPoints;  
+        this.baseDefPoints = defPoints;
     }
 
     public abstract void performTurn(Entity target);
@@ -120,4 +124,9 @@ public abstract class Entity {
 
     public boolean isTargeted() { return isTargeted; }
     public void setTargeted(boolean targeted) { this.isTargeted = targeted; }
+    
+    public boolean isAttackBoosted()  { return attackPoints > baseAttackPoints; }
+    public boolean isAttackReduced()  { return attackPoints < baseAttackPoints; }
+    public boolean isDefenseBoosted() { return defPoints > baseDefPoints; }
+    public boolean isDefenseReduced() { return defPoints < baseDefPoints; }
 }

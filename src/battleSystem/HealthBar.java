@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+
 import Entity.Entity;
 
 /**
@@ -14,9 +15,19 @@ public class HealthBar {
     private int height = 12;
     private int cornerRadius = 8;
 
-    private static final Color COLOR_START = new Color(255, 105, 180); // Rose
-    private static final Color COLOR_END = new Color(138, 43, 226);    // Violet
-    private static final Color COLOR_BG = new Color(50, 50, 50, 180);  // Fond sombre
+    private static final Color COLOR_START = new Color(255, 105, 180); 
+    private static final Color COLOR_END = new Color(138, 43, 226);   
+    private static final Color COLOR_BG = new Color(50, 50, 50, 180);  
+    
+    private static Image burnIcon;
+    static {
+        try {
+            burnIcon = new ImageIcon(HealthBar.class.getResource("/assets/burnt.png")).getImage();
+        } catch (Exception e) {
+            System.err.println("Icône de brûlure manquante : " + e.getMessage());
+        }
+    }
+
 
     /**
      * Dessine la barre de vie.
@@ -72,5 +83,72 @@ public class HealthBar {
         int tx = drawX + (currentWidth - fm.stringWidth(hpText)) / 2;
         int ty = drawY + (currentHeight / 2) + (fm.getAscent() / 2) - 2;
         g2.drawString(hpText, tx, ty);
+        
+        drawStatusRow(g2, drawX, drawY + currentHeight + 2, h);
+    }
+    private void drawStatusRow(Graphics2D g2, int startX, int statusY, Entity h) {
+        int cursorX = startX;
+        int iconSize = 14;
+
+        if (h.getBurnTicks() > 0) {
+            if (burnIcon != null) {
+                g2.drawImage(burnIcon, cursorX, statusY, iconSize, iconSize, null);
+            }
+            
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            
+            String text = "x" + h.getBurnTicks();
+            int textX = cursorX + iconSize + 2;
+            int textY = statusY + iconSize - 3;
+            
+            
+            g2.setFont(new Font("SansSerif", Font.BOLD, 12)); 
+                  
+            g2.setColor(Color.BLACK);
+            g2.drawString(text, textX + 1, textY + 1);
+                      
+            g2.setColor(new Color(255, 140, 0));
+            g2.drawString(text, textX, textY);
+            
+            cursorX += iconSize + 28; 
+        }
+
+        if (h.isAttackBoosted()) {
+            cursorX = drawStatLabel(g2, cursorX, statusY, "ATK", true);
+        } else if (h.isAttackReduced()) {
+            cursorX = drawStatLabel(g2, cursorX, statusY, "ATK", false);
+        }
+
+        if (h.isDefenseBoosted()) {
+            drawStatLabel(g2, cursorX, statusY, "DEF", true);
+        } else if (h.isDefenseReduced()) {
+            drawStatLabel(g2, cursorX, statusY, "DEF", false);
+        }
+    }
+
+    private int drawStatLabel(Graphics2D g2, int x, int y, String label, boolean boosted) {
+   
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        
+ 
+        String text = (boosted ? "+" : "-") + label;
+        
+        Font font = new Font("SansSerif", Font.BOLD, 14);
+        g2.setFont(font);
+        
+        FontMetrics fm = g2.getFontMetrics(font);
+        int textX = x;
+        int textY = y + 11; 
+        
+        g2.setColor(Color.BLACK);
+        g2.drawString(text, textX + 1, textY + 1);
+        
+      
+        Color mainColor = boosted ? new Color(50, 225, 100) : new Color(255, 70, 70);
+        g2.setColor(mainColor);
+        g2.drawString(text, textX, textY);
+        
+      
+        return x + fm.stringWidth(text) + 8;
     }
 }
