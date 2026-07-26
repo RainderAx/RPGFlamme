@@ -12,7 +12,7 @@ public class Flamme extends Entity implements UltimateCapable {
     private Scanner scanner = new Scanner(System.in);
     protected int boostAtkTicks = 0;
     protected boolean isPreparing = false; 
-    private static final int ULTI_MAX = 2;
+    private static final int ULTI_MAX = 4;
     private int ultiTicks = ULTI_MAX;
     private boolean isUltimateReady = false;
 
@@ -67,7 +67,7 @@ public class Flamme extends Entity implements UltimateCapable {
     public void briquet(Entity target) {
         System.out.println(getName() + " utilise son briquet sur " + target.getName() + " !");
         this.attack(target);
-        target.setBurn(5);
+        target.setBurn(target.getBurnTicks() + 2);
     }
 
     public void encensDuTigre() {
