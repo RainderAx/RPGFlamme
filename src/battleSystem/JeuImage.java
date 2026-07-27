@@ -235,7 +235,7 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
 
         g2.translate(-shakeX, -shakeY);
 
-     
+
         battleSystem.getAnimationManager().render(g2, getWidth(), getHeight(), this);
     }
 
@@ -251,22 +251,19 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             int offset = (battleSystem.isPlayerPhase() && h == currentHero) ? (int) (Math.sin(animationAngle) * 10) : 0;
 
             Image img;
-            int drawH = 140;
-            int drawW;
-
             if (h instanceof Flamme) {
                 img = flammeImg;
-                drawW = (int) (drawH * (621.0 / 1331.0));
             } else if (h instanceof Tching) {
                 img = tchingImg;
-                drawW = (int) (drawH * (703.0 / 1614.0));
             } else if (h instanceof Bob) {
                 img = ((Bob) h).isTransformed() ? darkBobImg : bobImg;
-                drawW = (int) (drawH * (1000.0 / 1900.0));
             } else {
                 img = null;
-                drawW = 80;
             }
+
+            int drawH = 140;
+
+            int drawW = spriteWidthFor(img, drawH);
 
             if (img != null) g2.drawImage(img, x, y + offset, drawW, drawH, this);
 
@@ -281,6 +278,15 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             g2.setFont(new Font("Arial", Font.PLAIN, 11));
             g2.drawString(h.getName(), x - 5, y + offset + drawH + 14);
         }
+    }
+
+   
+    private int spriteWidthFor(Image img, int targetHeight) {
+        if (img == null) return 80;
+        int iw = img.getWidth(this);
+        int ih = img.getHeight(this);
+        if (iw <= 0 || ih <= 0) return 80;
+        return (int) (targetHeight * ((double) iw / ih));
     }
 
     private void drawMonsters(Graphics2D g2) {

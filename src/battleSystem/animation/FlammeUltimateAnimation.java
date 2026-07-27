@@ -45,11 +45,13 @@ public class FlammeUltimateAnimation extends UltimateAnimation {
             g2.fillOval(px, py, 6, 6);
         }
 
-        if (flammeImg != null) {
-            int spriteH = (int) (h * 0.4);
-            int spriteW = (int) (spriteH * (621.0 / 1331.0));
-            g2.drawImage(flammeImg, (int) (w * 0.05), (int) (h * 0.5), spriteW, spriteH, obs);
-        }
+        // Sprite de Flamme centré, proportions réelles respectées (plus d'écrasement,
+        // plus de décalage sur le bord gauche).
+        int boxW = (int) (w * 0.35);
+        int boxH = (int) (h * 0.5);
+        int boxX = (w - boxW) / 2;
+        int boxY = (int) (h * 0.22);
+        AnimationImageUtils.drawContained(g2, flammeImg, boxX, boxY, boxW, boxH, obs);
 
         if (p > 0.75f) {
             float local = (p - 0.75f) / 0.25f;
@@ -58,7 +60,7 @@ public class FlammeUltimateAnimation extends UltimateAnimation {
             g2.fillOval(arrowLen - r / 2, arrowY - r / 2, r, r);
         }
 
-        AnimationTextUtils.drawOutlinedText(g2, "FLECHE ARDENTE", (int) (w * 0.06), (int) (h * 0.2),
+        AnimationTextUtils.drawOutlinedText(g2, "FLECHE ARDENTE", (int) (w * 0.06), (int) (h * 0.15),
                 (int) (h * 0.09), Color.ORANGE);
     }
 }

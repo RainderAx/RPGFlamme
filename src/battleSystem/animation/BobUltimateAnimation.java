@@ -7,7 +7,6 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.ImageObserver;
 
-/** Animation de premier plan de l'ultime de Bob : flash -> transformation -> explosion -> "Super Bob". */
 public class BobUltimateAnimation extends UltimateAnimation {
     private Image transfoImg;
     private Image frameImg;
@@ -15,8 +14,8 @@ public class BobUltimateAnimation extends UltimateAnimation {
     public BobUltimateAnimation() {
         super(150);
         try {
-            transfoImg = new ImageIcon(getClass().getResource("/assets/Sprite_BoB_transfo.png")).getImage();
-            frameImg = new ImageIcon(getClass().getResource("/assets/BoB_Ultimate_frame.png")).getImage();
+            frameImg = new ImageIcon(getClass().getResource("/assets/Sprite_BoB_transfo.png")).getImage();
+            transfoImg = new ImageIcon(getClass().getResource("/assets/BoB_Ultimate_frame.png")).getImage();
         } catch (Exception e) {
             System.err.println("Sprites Bob Ultimate manquants : " + e.getMessage());
         }
@@ -32,17 +31,16 @@ public class BobUltimateAnimation extends UltimateAnimation {
             g2.fillRect(0, 0, w, h);
         }
 
-        double ratio = 1121.0 / 1152.0;
-        int spriteH = (int) (h * 0.55);
-        int spriteW = (int) (spriteH * ratio);
-        int x = (w - spriteW) / 2;
-        int y = (int) (h * 0.22);
+        int boxW = (int) (w * 0.45);
+        int boxH = (int) (h * 0.55);
+        int boxX = (w - boxW) / 2;
+        int boxY = (int) (h * 0.22);
 
         Image img = (p < 0.5f) ? transfoImg : frameImg;
-        if (img != null) g2.drawImage(img, x, y, spriteW, spriteH, obs);
+        AnimationImageUtils.drawContained(g2, img, boxX, boxY, boxW, boxH, obs);
 
         if (p >= 0.5f) {
-            drawExplosion(g2, w / 2, y + spriteH / 2, p);
+            drawExplosion(g2, w / 2, boxY + boxH / 2, p);
         }
 
         int fontSize = (int) (h * 0.09);
