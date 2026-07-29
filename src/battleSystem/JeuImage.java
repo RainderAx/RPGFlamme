@@ -13,7 +13,7 @@ import Entity.*;
 
 public class JeuImage extends JPanel implements ActionListener, BattleSystemListener {
 
-    private Image background, flammeImg, tchingImg, bobImg, darkBobImg, enemyImg, chefGobelin;
+    private Image background, flammeImg, tchingImg, bobImg, darkBobImg, enemyImg, chefGobelin, darkt, darkf, darkb;
     private final List<Entity> heroes;
     private final List<Entity> monsters;
     private final BattleSystem battleSystem;
@@ -61,6 +61,9 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
             darkBobImg = new ImageIcon(getClass().getResource("/assets/Sprite_BoB_transfo.png")).getImage();
             enemyImg   = new ImageIcon(getClass().getResource("/assets/Sprite_Monster.png")).getImage();
             chefGobelin = new ImageIcon(getClass().getResource("/assets/Chef_Gobelin.png")).getImage();
+            darkt = new ImageIcon(getClass().getResource("/assets/Sprite_Tching_Shadow.png")).getImage();
+            darkf = new ImageIcon(getClass().getResource("/assets/Sprite_Flamme_Shadow.png")).getImage();
+            darkb = new ImageIcon(getClass().getResource("/assets/Sprite_Bob_Shadow.png")).getImage();
         } catch (Exception e) {
             System.err.println("Images manquantes : " + e.getMessage());
         }
@@ -297,7 +300,15 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
 
             Rectangle r = boxes.get(i);
 
-
+            Image img;
+            if (m instanceof darkB) {
+                img = darkb;
+            } else if (m instanceof darkF) {
+                img = darkf;
+            } else if (m instanceof darkT) {
+                img = darkt;
+            } else if (m instanceof chefGobelin) {
+                img = chefGobelin;
             Image img = (m instanceof chefGobelin) ? chefGobelin : enemyImg;
             if (img != null) g2.drawImage(img, r.x, r.y, r.width, r.height, this);
 

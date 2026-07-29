@@ -2,10 +2,7 @@ package Entity;
 
 import java.util.Random;
 
-/**
- * Clone maléfique de Flamme. Reprend certaines techniques de l'original
- * de façon corrompue (malédiction, brasier désespéré, vol de vie).
- */
+
 public class DarkFlamme extends Flamme {
 
     private static final Random dice = new Random();
@@ -16,8 +13,7 @@ public class DarkFlamme extends Flamme {
 
     @Override
     public void performTurn(Entity target) {
-        // Si DarkFlamme était en train de préparer une attaque au tour précédent,
-        // la méthode héritée de Flamme gère la finalisation de l'attaque chargée.
+    
         if (isPreparing) {
             finaliserPreparationMentale(target);
             return;

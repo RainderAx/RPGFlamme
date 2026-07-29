@@ -16,6 +16,8 @@ import Entity.Tching;
 import Entity.UltimateCapable;
 import Entity.Gobelin;
 import Entity.chefGobelin;
+import Entity.DarkFlamme;
+import Entity.DarkTching;
 import battleSystem.animation.AnimationManager;
 
 
@@ -216,10 +218,17 @@ public class BattleSystem {
         }
 
         heroIndexTurn = 0;
+        skipDeadHeroes();
         isPlayerPhase = true;
 
         if (endBattleIfNeeded()) return;
         if (listener != null) listener.onTurnChanged(getCurrentHero(), true);
+    }
+
+    private void skipDeadHeroes() {
+        while (heroIndexTurn < heroes.size() && !heroes.get(heroIndexTurn).isAlive()) {
+            heroIndexTurn++;
+        }
     }
 
     private boolean endBattleIfNeeded() {
