@@ -294,24 +294,36 @@ public class JeuImage extends JPanel implements ActionListener, BattleSystemList
 
     private void drawMonsters(Graphics2D g2) {
         List<Rectangle> boxes = getMonsterHitboxes();
+
         for (int i = 0; i < monsters.size(); i++) {
             Entity m = monsters.get(i);
             if (!m.isAlive()) continue;
 
+          
+            if (i >= boxes.size()) break; 
             Rectangle r = boxes.get(i);
 
             Image img;
-            if (m instanceof darkB) {
-                img = darkb;
-            } else if (m instanceof darkF) {
+            if (m instanceof DarkFlamme) {
                 img = darkf;
-            } else if (m instanceof darkT) {
+            } else if (m instanceof DarkTching) {
                 img = darkt;
             } else if (m instanceof chefGobelin) {
                 img = chefGobelin;
-            Image img = (m instanceof chefGobelin) ? chefGobelin : enemyImg;
-            if (img != null) g2.drawImage(img, r.x, r.y, r.width, r.height, this);
+            } else if (m instanceof DarkBob) {
+                img = darkb;
+            }
 
+            else {
+                img = enemyImg;
+            }
+
+         
+            if (img != null) {
+                g2.drawImage(img, r.x, r.y, r.width, r.height, this);
+            }
+
+          
             boolean hovered = (m == hoveredEntity);
             healthBar.draw(g2, r.x + r.width / 2, r.y - 10, m, hovered);
         }
