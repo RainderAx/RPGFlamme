@@ -1,6 +1,6 @@
 package battleSystem;
 
-import javax.swing.*;
+import javax.swing.*;    
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextLayout;
@@ -22,7 +22,7 @@ public class zoneDetest extends JPanel implements ActionListener {
     private int ultiX = 0; 
     private int currentWinWidth;
     
-    // États spécifiques
+    // États spécifiques à Bob
     private boolean bobIsTransformed = false;
     private boolean isBobUlti = false; // Pour différencier l'animation visuelle
 
